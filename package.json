@@ -10,8 +10,9 @@
   "author": "Jaadu",
   "license": "ISC",
   "dependencies": {
-    "mysql":"",
-    "stemmer":"",
-    "wordpos":""
+    "express-generator": "^4.16.1",
+    "mysql": "",
+    "stemmer": "",
+    "wordpos": ""
   }
 }

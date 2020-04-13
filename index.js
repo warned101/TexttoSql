@@ -3,7 +3,7 @@ var stemmer = require('stemmer');
 var mysql = require('mysql');
 
 const wordpos = new wordPos();
-
+const dbconnection = require('./dbConnect');
 var str = 'Find the student name where instructor name is ’Crick’ from bharat';
 
 wordpos.getNouns(str).then(res => {
@@ -112,35 +112,20 @@ for (var i = 0; i < words.length; i++) {
 
 var dtb = "";
 
-var con = mysql.createConnection({
-  host: "localhost",
-  user: "root",
-  password: "asdf"
-});
 
-con.connect(function(err) {
+dbconnection.connect(function(err) {
   if (err) throw err;
   console.log("Connected!");
-  con.query("SHOW DATABASES", function (err, result) {
+  dbconnection.query("SHOW DATABASES", function (err, result) {
     if (err) throw err;
 
     dtb = result;
 
     console.log(result);
-    test();
+    // test();
   });
-  con.end();
+  dbconnection.end();
 });
-
-
-function test()
-{
-	console.log("h");
-}
-
-
-
-
 
 
 var escape_array = ["find", "select", "publish", "print", "who", "where", "which", "what", "give", "list", "i", "we", "show"];
