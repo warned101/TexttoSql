@@ -12,6 +12,8 @@
   "dependencies": {
     "express-generator": "^4.16.1",
     "mysql": "",
+    "mysql-promise": "^5.0.0",
+    "mysql2": "^2.1.0",
     "stemmer": "",
     "wordpos": ""
   }
