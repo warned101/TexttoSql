@@ -1,16 +1,11 @@
-<<<<<<< HEAD
-const mysql = require('mysql'); 
-var db_username = (process.env.DB_USERNAME || 'root')
-var db_pass = (process.env.DB_PASS || 'asdf');
-
-=======
 const mysql = require('mysql');
 const allTable = [];
 // create the connection to database
->>>>>>> d7dd378decd76924da63db054823fa8a9ba6e380
+
 const con = mysql.createConnection({
   host: 'localhost',
   user: 'root',
+  password:'asdf',
   database: ''
 });
 module.exports = con;
