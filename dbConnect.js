@@ -1,6 +1,6 @@
 const mysql = require('mysql'); 
 var db_username = (process.env.DB_USERNAME || 'root')
-var db_pass = (process.env.DB_PASS || '');
+var db_pass = (process.env.DB_PASS || 'asdf');
 
 const con = mysql.createConnection({
   host: "localhost",
