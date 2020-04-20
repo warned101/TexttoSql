@@ -1,33 +1,33 @@
 ﻿var wordPos = require("wordpos");
 var stemmer = require('stemmer');
 var mysql = require('mysql');
-var allTables = [];
+const con = require('./dbConnect');
 const wordpos = new wordPos();
-const dbconnection = require('./dbConnect');
+
 var str = 'Find the student name where instructor name is ’Crick’ from bharat';
+inputBreakdown(str);
 
-wordpos.getNouns(str).then(res => {
-	console.log("Nouns: " + res);
-});
-
-wordpos.getVerbs(str).then(result => {
-	console.log("Verbs: " + result);
-});
-
-wordpos.getAdverbs(str).then(res => {
-	console.log("Adverbs: " + res);
-});
-
-wordpos.getAdjectives(str).then(res => {
-	console.log("Adjectives: " + res);
-});
+// function prints noun verb .... from the input string
+function inputBreakdown(inputStr) {
+	wordpos.getNouns(inputStr).then(res => {
+		console.log("Nouns: " + res);
+	});
+	wordpos.getVerbs(inputStr).then(result => {
+		console.log("Verbs: " + result);
+	});
+	wordpos.getAdverbs(inputStr).then(res => {
+		console.log("Adverbs: " + res);
+	});
+	wordpos.getAdjectives(inputStr).then(res => {
+		console.log("Adjectives: " + res);
+	});
+}
 
 var words = str.toLowerCase().split(" ");
 
 console.log("Stemmers: " + stemmer(words));
 
 break_words = ["in", "for", "at", "whose", "having", "where", "have", "who", "that", "with", "by", "under", "from", "all"];
-
 
 Array.prototype.diff = function (arr2) {
 	var ret = [];
@@ -110,56 +110,6 @@ for (var i = 0; i < words.length; i++) {
 	}
 }
 
-var dtb = "";
-
-const objectifyRawPacket = row => ({ ...row });
-
-dbconnection.connect(function (err) {
-	if (err) throw err;
-	console.log("Connected!");
-	dbconnection.query("SHOW DATABASES", (err, result) => {
-		if (err) throw err;
-		const databases = result.map(objectifyRawPacket);
-		databases.forEach((db) => {
-			let query = `SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE (TABLE_SCHEMA = '${db.Database}') ORDER BY TABLE_NAME`;
-			dbconnection.query(query, (err, res) => {
-				if (err) {
-					console.log(err.message);
-				}
-				res = res.map(objectifyRawPacket);
-				// console.log(db)
-				res.forEach((table) => {
-					let tempquery = `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = N'${table.TABLE_NAME}'`
-					// console.log(table.TABLE_NAME);
-					// allTables.courses[db.Database].push(table.TABLE_NAME);
-					dbconnection.query(tempquery, (err, col) => {
-						if (err)
-							console.log(err)
-						else {
-							col =col.map(objectifyRawPacket);
-							// console.log(r)
-							// temp = {...temp ,r}
-							col = JSON.stringify(col);
-							// console.log(col)
-							let x = { database: db.Database, table: table.TABLE_NAME, col};
-							x = JSON.stringify(x);
-							x = JSON.parse(x);
-							// console.log(JSON.parse(x))
-							allTables.push(x);
-						}
-					})
-					// console.log(temp);
-				})
-			})
-		})
-	});
-	setTimeout(()=>{
-		console.log(allTables)
-		console.log("db connection closed!")
-		dbconnection.end();
-	},5000)
-});
-
 
 var escape_array = ["find", "select", "publish", "print", "who", "where", "which", "what", "give", "list", "i", "we", "show"];
 var insert_array = ["insert", "put"];
@@ -179,4 +129,46 @@ else
 	query_type = "DML";
 
 console.log("Type of query: " + query_type);
-	// console.log(words);
+// console.log(words);
+
+
+
+// ============================================= DB CONNECTION AND ALL TABLE INFO RETERIVE ===========================================
+
+let database_data = [];
+const objectifyRawPacket = row => ({ ...row });
+
+con.promise().query("SHOW DATABASES")
+	.then(([rows, fields]) => {
+		// console.log(rows)
+		rows = rows.map(objectifyRawPacket);
+		getDatabaseInfo(rows).then(() => {
+			// console.log('hmm')
+		});
+	})
+	.catch((err) => console.log(err));
+
+function runQuery(dbname) {
+	return new Promise((resolve, reject) => {
+		con.promise().query(`select TABLE_NAME , COLUMN_NAME from information_schema.columns where table_schema = '${dbname}' order by table_name,ordinal_position`)
+			.then(([rows, fields]) => {
+				rows = rows.map(objectifyRawPacket);
+				resolve(rows);
+			})
+			.catch((err) => console.log(err));
+	})
+}
+
+async function getDatabaseInfo(database) {
+	for (const iterator of database) {
+		let x = await runQuery(iterator.Database);
+		// console.log(typeof (x));
+		x = JSON.stringify(x);
+		x = JSON.parse(x);
+		database_data.push(x);
+	}
+	// console.log(database_data); 
+	con.end();
+}
+
+// ============================================= DB CONNECTION END ===========================================
