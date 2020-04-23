@@ -1,12 +1,33 @@
-﻿var wordPos = require("wordpos");
-var stemmer = require('stemmer');
-var mysql = require('mysql');
+﻿const wordPos = require("wordpos");
+const stemmer = require('stemmer');
+const mysql = require('mysql');
 const con = require('./dbConnect');
+const bodyparser = require('body-parser');
 const wordpos = new wordPos();
+let str = "who is topper of class";
 
-var str = 'Find the student name where instructor name is ’Crick’ from bharat';
+const express = require('express')
+const app = express();
+app.use(bodyparser.json());
+app.use(bodyparser.urlencoded({ extended: true }));
+
+app.get('/', (req, res) => {
+	res.sendFile(__dirname + '/public/index.html');
+})
+
+app.post('/test', (req, res) => {
+	// console.log(req.body)
+	if (req.body.inputText) {
+		str = req.body.inputText;
+		res.end();
+	}
+	else {
+		res.send("error");
+	}
+})
+
+
 inputBreakdown(str);
-
 // function prints noun verb .... from the input string
 function inputBreakdown(inputStr) {
 	wordpos.getNouns(inputStr).then(res => {
@@ -21,10 +42,11 @@ function inputBreakdown(inputStr) {
 	wordpos.getAdjectives(inputStr).then(res => {
 		console.log("Adjectives: " + res);
 	});
+
 }
 
-var words = str.toLowerCase().split(" ");
 
+let words = str.toLowerCase().split(" ");
 console.log("Stemmers: " + stemmer(words));
 
 break_words = ["in", "for", "at", "whose", "having", "where", "have", "who", "that", "with", "by", "under", "from", "all"];
@@ -172,3 +194,9 @@ async function getDatabaseInfo(database) {
 }
 
 // ============================================= DB CONNECTION END ===========================================
+
+
+
+app.listen(3000, () => {
+	console.log('server running at 30000...')
+})
