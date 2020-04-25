@@ -5,9 +5,14 @@ const con = require('./dbConnect');
 const bodyparser = require('body-parser');
 const wordpos = new wordPos();
 let str = "who is topper of class";
-
 const express = require('express')
 const app = express();
+
+
+let allTableCol = new Map(); // all table cols name 
+let allTable = []; 			// all tales name
+
+
 app.use(bodyparser.json());
 app.use(bodyparser.urlencoded({ extended: true }));
 
@@ -157,7 +162,6 @@ console.log("Type of query: " + query_type);
 
 // ============================================= DB CONNECTION AND ALL TABLE INFO RETERIVE ===========================================
 
-let database_data = [];
 const objectifyRawPacket = row => ({ ...row });
 
 con.promise().query("SHOW DATABASES")
@@ -181,7 +185,25 @@ function runQuery(dbname) {
 	})
 }
 
+
+// Helper function for formatting the data recived from MYSQL DB
+function modifyDataFormate(database_data) {
+	database_data.forEach(element => {
+		let temp = [];
+		let tname;
+		element.forEach(i => {
+			tname = i.TABLE_NAME;
+			temp.push(i.COLUMN_NAME);
+		})
+		if (tname) {
+			allTable.push(tname);
+			allTableCol.set(tname, temp);
+			console.log(allTableCol);
+		}
+	});
+}
 async function getDatabaseInfo(database) {
+	let database_data = [];
 	for (const iterator of database) {
 		let x = await runQuery(iterator.Database);
 		// console.log(typeof (x));
@@ -189,7 +211,7 @@ async function getDatabaseInfo(database) {
 		x = JSON.parse(x);
 		database_data.push(x);
 	}
-	// console.log(database_data); 
+	modifyDataFormate(database_data);
 	con.end();
 }
 
@@ -197,6 +219,6 @@ async function getDatabaseInfo(database) {
 
 
 
-app.listen(3000, () => {
-	console.log('server running at 30000...')
+app.listen(4000, () => {
+	console.log('server running at 4000...')
 })
