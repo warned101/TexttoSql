@@ -4,7 +4,6 @@ const mysql = require('mysql');
 const con = require('./dbConnect');
 const bodyparser = require('body-parser');
 const wordpos = new wordPos();
-let str = "who is topper of class";
 const express = require('express')
 const app = express();
 
@@ -12,18 +11,33 @@ const app = express();
 let allTableCol = new Map(); // all table cols name 
 let allTable = []; 			// all tales name
 
+let strData = {
+	relativeClause: [],
+	limitClause: [],
+	orderedClause: [],
+	aggregateClause: [],
+	aggregClause: [],
+	relations: ['student'],
+	attribute: ['marks', 'name'],
+	finalQuery: "select name from student where marks > 80 "
+};
 
+app.set('view engine', 'ejs');
 app.use(bodyparser.json());
 app.use(bodyparser.urlencoded({ extended: true }));
 
 app.get('/', (req, res) => {
 	res.sendFile(__dirname + '/public/index.html');
 })
+app.post('/test', async (req, res) => {
 
-app.post('/test', (req, res) => {
-	// console.log(req.body)
 	if (req.body.inputText) {
-		str = req.body.inputText;
+		let str = req.body.inputText;
+		strData.inputText = req.body.inputText ;
+		await inputBreakdown(str);
+		clause(str);
+		console.log(strData);
+		res.render("show", { data: strData });
 		res.end();
 	}
 	else {
@@ -32,131 +46,138 @@ app.post('/test', (req, res) => {
 })
 
 
-inputBreakdown(str);
 // function prints noun verb .... from the input string
 function inputBreakdown(inputStr) {
-	wordpos.getNouns(inputStr).then(res => {
-		console.log("Nouns: " + res);
-	});
-	wordpos.getVerbs(inputStr).then(result => {
-		console.log("Verbs: " + result);
-	});
-	wordpos.getAdverbs(inputStr).then(res => {
-		console.log("Adverbs: " + res);
-	});
-	wordpos.getAdjectives(inputStr).then(res => {
-		console.log("Adjectives: " + res);
-	});
-
+	return new Promise(async (resolve, reject) => {
+		strData.nouns = await wordpos.getNouns(inputStr);
+		strData.verbs = await wordpos.getVerbs(inputStr);
+		strData.adverbs = await wordpos.getAdverbs(inputStr);
+		strData.adjectives = await wordpos.getAdjectives(inputStr);
+		resolve("sucess!");
+	})
 }
 
+function clause(str) {
+	return new Promise((resolve, reject) => {
+		let words = str.toLowerCase().split(" ");
+		strData.stemmer = stemmer(words);
+		console.log("Stemmers: " + strData.stemmer);
 
-let words = str.toLowerCase().split(" ");
-console.log("Stemmers: " + stemmer(words));
+		break_words = ["in", "for", "at", "whose", "having", "where", "have", "who", "that", "with", "by", "under", "from", "all"];
+		Array.prototype.diff = function (arr2) {
+			var ret = [];
+			this.sort();
+			arr2.sort();
+			for (var i = 0; i < this.length; i += 1) {
+				if (arr2.indexOf(this[i]) > -1) {
+					ret.push(this[i]);
+				}
+			}
+			return ret;
+		};
 
-break_words = ["in", "for", "at", "whose", "having", "where", "have", "who", "that", "with", "by", "under", "from", "all"];
+		strData.breakWords = words.diff(break_words);
+		console.log("break_words: " + strData.breakWords);
 
-Array.prototype.diff = function (arr2) {
-	var ret = [];
-	this.sort();
-	arr2.sort();
-	for (var i = 0; i < this.length; i += 1) {
-		if (arr2.indexOf(this[i]) > -1) {
-			ret.push(this[i]);
+
+		var rel_op_dict = { "greater": ">", "more": ">", "less": "<", "greater equal": ">=", "less equal": "<=", "equal": "=", "": "=", "except": "!=", "not": "!=" };
+
+		for (var i = 0; i < words.length; i++) {
+			for (var key in rel_op_dict) {
+				if (words[i] == key) {
+					// console.log("relative clause:" + rel_op_dict[key]);
+					strData.relativeClause.push(rel_op_dict[key]);
+					// console.log(strData.relativeClause)
+				}
+			}
 		}
-	}
-	return ret;
-};
-
-console.log("break_words: " + words.diff(break_words));
 
 
+		var order_by_dict = { "ordered": "ASC", "sorted": "ASC", "alphabetical": "ASC", "alphabetically": "ASC", "increasing": "ASC", "decreasing": "DESC", "ascending": "ASC", "descending": "DESC", "reverse": "DESC", "alphabetic": "ASC" };
 
-var rel_op_dict = { "greater": ">", "more": ">", "less": "<", "greater equal": ">=", "less equal": "<=", "equal": "=", "": "=", "except": "!=", "not": "!=" };
-
-for (var i = 0; i < words.length; i++) {
-	for (var key in rel_op_dict) {
-		if (words[i] == key) {
-			console.log("relative clause:" + rel_op_dict[key]);
+		for (var i = 0; i < words.length; i++) {
+			for (var key in order_by_dict) {
+				if (words[i] == key) {
+					// console.log("ordered clause:" + order_by_dict[key]);
+					strData.orderedClause.push(order_by_dict[key]);
+				}
+			}
 		}
-	}
+
+
+		var aggregate_of_dict = { "number": "COUNT", "count": "COUNT", "total": "SUM", "sum": "SUM", "average": "AVG", "mean": "AVG" };
+
+		for (var i = 0; i < words.length; i++) {
+			for (var key in aggregate_of_dict) {
+				if (words[i] == key) {
+					// console.log("Aggregate clause:" + aggregate_of_dict[key]);
+					strData.aggregateClause.push(aggregate_of_dict[key]);
+				}
+			}
+		}
+
+
+		var aggregate_dict = { "maximum": "MAX", "highest": "MAX", "minimum": "MIN", "most": "MAX", "least": "MIN", "lowest": "MIN", "largest": "MAX", "smallest": "MIN" };
+
+		for (var i = 0; i < words.length; i++) {
+			for (var key in aggregate_dict) {
+				if (words[i] == key) {
+					// console.log("Aggreg clause:" + aggregate_dict[key]);
+					strData.aggregClause.push(aggregate_dict[key]);
+				}
+			}
+		}
+
+
+		var limit_dict = { "maximum": "DESC", "highest": "DESC", "minimum": "ASC", "most": "DESC", "least": "ASC", "lowest": "ASC", "largest": "DESC", "smallest": "ASC" };
+
+		for (var i = 0; i < words.length; i++) {
+			for (var key in limit_dict) {
+				if (words[i] == key) {
+					// console.log("Limit clause:" + limit_dict[key]);
+					strData.limitClause.push(limit_dict[key]);
+				}
+			}
+		}
+
+
+		var limit_word_dict = { "first": 1, "second": 2, "third": 3, "fourth": 4, "fifth": 5, "sixth": 6, "seventh": 7, "eighth": 8, "ninth": 9, "tenth": 10 };
+
+		for (var i = 0; i < words.length; i++) {
+			for (var key in limit_word_dict) {
+				if (words[i] == key) {
+					// console.log("relative clause:" + limit_word_dict[key]);
+
+				}
+			}
+		}
+
+
+		var escape_array = ["find", "select", "publish", "print", "who", "where", "which", "what", "give", "list", "i", "we", "show"];
+		var insert_array = ["insert", "put"];
+		var update_array = ["update", "edit", "set", "change"];
+		var delete_array = ["delete", "remove"];
+
+		var insert_type = words.diff(insert_array);
+		var update_type = words.diff(update_array);
+		var delete_type = words.diff(delete_array);
+		var select_type = words.diff(escape_array);
+
+		var query_type;
+
+		if (insert_type.length > 0 || update_type.length > 0 || select_type > 0)
+			query_type = "DDL";
+		else
+			query_type = "DML";
+
+		// console.log("Type of query: " + query_type);
+		strData.queryType = query_type;
+		// console.log(strData)
+		resolve("sucess!!")
+	})
+
+
 }
-
-
-var order_by_dict = { "ordered": "ASC", "sorted": "ASC", "alphabetical": "ASC", "alphabetically": "ASC", "increasing": "ASC", "decreasing": "DESC", "ascending": "ASC", "descending": "DESC", "reverse": "DESC", "alphabetic": "ASC" };
-
-for (var i = 0; i < words.length; i++) {
-	for (var key in order_by_dict) {
-		if (words[i] == key) {
-			console.log("ordered clause:" + order_by_dict[key]);
-		}
-	}
-}
-
-
-var aggregate_of_dict = { "number": "COUNT", "count": "COUNT", "total": "SUM", "sum": "SUM", "average": "AVG", "mean": "AVG" };
-
-for (var i = 0; i < words.length; i++) {
-	for (var key in aggregate_of_dict) {
-		if (words[i] == key) {
-			console.log("Aggregate clause:" + aggregate_of_dict[key]);
-		}
-	}
-}
-
-
-var aggregate_dict = { "maximum": "MAX", "highest": "MAX", "minimum": "MIN", "most": "MAX", "least": "MIN", "lowest": "MIN", "largest": "MAX", "smallest": "MIN" };
-
-for (var i = 0; i < words.length; i++) {
-	for (var key in aggregate_dict) {
-		if (words[i] == key) {
-			console.log("Aggreg clause:" + aggregate_dict[key]);
-		}
-	}
-}
-
-
-var limit_dict = { "maximum": "DESC", "highest": "DESC", "minimum": "ASC", "most": "DESC", "least": "ASC", "lowest": "ASC", "largest": "DESC", "smallest": "ASC" };
-
-for (var i = 0; i < words.length; i++) {
-	for (var key in limit_dict) {
-		if (words[i] == key) {
-			console.log("Limit clause:" + limit_dict[key]);
-		}
-	}
-}
-
-
-var limit_word_dict = { "first": 1, "second": 2, "third": 3, "fourth": 4, "fifth": 5, "sixth": 6, "seventh": 7, "eighth": 8, "ninth": 9, "tenth": 10 };
-
-for (var i = 0; i < words.length; i++) {
-	for (var key in limit_word_dict) {
-		if (words[i] == key) {
-			console.log("relative clause:" + limit_word_dict[key]);
-		}
-	}
-}
-
-
-var escape_array = ["find", "select", "publish", "print", "who", "where", "which", "what", "give", "list", "i", "we", "show"];
-var insert_array = ["insert", "put"];
-var update_array = ["update", "edit", "set", "change"];
-var delete_array = ["delete", "remove"];
-
-var insert_type = words.diff(insert_array);
-var update_type = words.diff(update_array);
-var delete_type = words.diff(delete_array);
-var select_type = words.diff(escape_array);
-
-var query_type;
-
-if (insert_type.length > 0 || update_type.length > 0 || select_type > 0)
-	query_type = "DDL";
-else
-	query_type = "DML";
-
-console.log("Type of query: " + query_type);
-// console.log(words);
 
 
 
@@ -184,7 +205,6 @@ function runQuery(dbname) {
 			.catch((err) => console.log(err));
 	})
 }
-
 
 // Helper function for formatting the data recived from MYSQL DB
 function modifyDataFormate(database_data) {

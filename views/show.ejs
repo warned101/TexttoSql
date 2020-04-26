@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Home Page</title>
+    <link rel="stylesheet" type="text/css" href="//fonts.googleapis.com/css?family=Special+Elite" />
+    <style type="text/css" media="screen">
+        body {
+            font-family: Special Elite;
+            word-spacing: 5px;
+            font-size: 20px;
+            text-align: center;
+        }
+
+        li {
+            /* padding: 1px; */
+            margin: 10px;
+            ;
+        }
+
+        .container {
+            display: block;
+            margin: auto;
+            ;
+        }
+    </style>
+
+</head>
+
+<body>
+    <div class="container">
+        <p>Input Text: <%=data.inputText%> </p>
+        <h1>Break Down of String</h1>
+        <ul>
+            <li>Stemmer: <%=data.stemmer%></li>
+            <li>Break Words: <%=data.breakWords%></li>
+            <li>Nouns: <%=data.nouns%> </li>
+            <li>Verbs: <%=data.verbs%> </li>
+            <li>Adverbs: <%=data.verbs%> </li>
+            <li>Adjectives: <%=data.adjectives%></li>
+            <li>Relative Clause: <%=data.relativeClause%> </li>
+            <li>Limit Clause: <%=data.limitClause%></li>
+            <li>Ordered Clause: <%=data.orderedClause%></li>
+            <li>Aggregate Clause: <%=data.aggregateClause%></li>
+            <li>Query Type: <%=data.queryType%></li>
+        </ul>
+        <h1>Relations and Attribute Matched</h1>
+        <ul>
+            <li>Relation: <%=data.relations%></li>
+            <li>Attribute: <%=data.attribute%> </li>
+        </ul>
+        <h1>Query Stuggested</h1>
+        <span style="background-color: #FFFF00"><%=data.finalQuery%></span>
+        <!-- <center>
+            <%=data.nouns%>
+        </center> -->
+    </div>
+</body>
+
+</html>
