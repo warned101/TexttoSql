@@ -17,9 +17,9 @@ let strData = {
 	orderedClause: [],
 	aggregateClause: [],
 	aggregClause: [],
-	relations: ['student'],
-	attribute: ['marks', 'name'],
-	finalQuery: "select name from student where marks > 80 "
+	relations: [],
+	attribute: [],
+	finalQuery: ""
 };
 
 app.set('view engine', 'ejs');
