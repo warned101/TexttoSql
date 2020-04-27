@@ -1,9 +1,14 @@
 ﻿const wordPos = require("wordpos");
 const stemmer = require('stemmer');
+var pluralize = require('pluralize');
 const mysql = require('mysql');
 const con = require('./dbConnect');
 const bodyparser = require('body-parser');
 const wordpos = new wordPos();
+<<<<<<< HEAD
+let str = "find the names roll_no of student having marks between 40 and 70";
+=======
+>>>>>>> 1f8d96219a8cc38193c9605c43a3fd79640427c9
 const express = require('express')
 const app = express();
 
@@ -57,6 +62,33 @@ function inputBreakdown(inputStr) {
 	})
 }
 
+<<<<<<< HEAD
+
+let words = str.toLowerCase().split(" ");
+
+var final_query;
+var table_query = " from ";
+var attributes_query;
+var Initial_query;
+
+
+deleteUnnecessary();
+
+clauseIdentification();
+
+console.log("Stemmers: " + stemmer(words));
+
+
+break_words = ["in", "for", "at", "whose", "having", "where", "have", "who", "that", "with", "by", "under", "from", "all"];
+
+Array.prototype.diff = function (arr2) {
+	var ret = [];
+	this.sort();
+	arr2.sort();
+	for (var i = 0; i < this.length; i += 1) {
+		if (arr2.indexOf(this[i]) > -1) {
+			ret.push(this[i]);
+=======
 function clause(str) {
 	return new Promise((resolve, reject) => {
 		let words = str.toLowerCase().split(" ");
@@ -90,6 +122,7 @@ function clause(str) {
 					// console.log(strData.relativeClause)
 				}
 			}
+>>>>>>> 1f8d96219a8cc38193c9605c43a3fd79640427c9
 		}
 
 
@@ -176,6 +209,16 @@ function clause(str) {
 		resolve("sucess!!")
 	})
 
+<<<<<<< HEAD
+if (insert_type.length > 0 || update_type.length > 0 || select_type > 0)
+	query_type = "DDL";
+else{
+	query_type = "DML";
+	Initial_query = "Select ";
+	console.log("Initial query is " + Initial_query);
+}
+=======
+>>>>>>> 1f8d96219a8cc38193c9605c43a3fd79640427c9
 
 }
 
@@ -218,7 +261,7 @@ function modifyDataFormate(database_data) {
 		if (tname) {
 			allTable.push(tname);
 			allTableCol.set(tname, temp);
-			console.log(allTableCol);
+			// console.log(allTableCol);
 		}
 	});
 }
@@ -242,3 +285,102 @@ async function getDatabaseInfo(database) {
 app.listen(4000, () => {
 	console.log('server running at 4000...')
 })
+
+
+
+
+
+
+
+
+function deleteUnnecessary(){
+	del_words = ["a","an","the","select","find","which","is","of","with","to","for","are","what"];
+	
+	words = words.filter( function( el ) {
+		return !del_words.includes( el );
+	});
+
+	console.log("Words remaining: " + words);
+
+}
+
+
+function singularpluralCorrection() {
+	for (var i = 0; i < words.length; i++) {
+		console.log("Plural: " + pluralize(words[i]));
+	}
+
+	for (var i = 0; i < words.length; i++) {
+		console.log("Singular:" + pluralize.singular(words[i]));
+	}
+}
+
+
+
+
+
+function databaseAndTableIndentification(){
+	let db = "Janvi & Jaadu";
+	let table_name = "students";
+
+	console.log("This is hello world");
+
+	if(words.includes(db))
+		console.log("databse is " + db);
+
+	if(words.includes(table_name)) {
+		console.log("Table is " + db);
+		table_query = table_query.concat(table_name);
+		console.log("Table query is " + table_query);
+	}
+}
+
+
+
+
+
+function attributeIdentication(){
+	attributes = ["names", "roll_no","age","marks"];
+	attributesMatched = words.diff(attributes);
+	console.log("Attributes: " + attributesMatched);
+	attributes_query = attributesMatched;
+	console.log("Attributes query is " + attributes_query);
+}
+
+
+function integerIdentifcation() { 
+	for (var i = 0; i < words.length; i++) {
+		console.log("Integers found are: " + words[i].match(/(\d+)/));  
+	}
+} 
+
+
+
+function clauseIdentification() {
+	var num = words.indexOf("having");
+	words[num] = "where";
+	final_query = "where";
+	for (var i = num + 1; i < words.length; i++) {
+		// console.log("wo" + words[i]);
+		final_query = final_query.concat(" ", words[i]);
+	}
+
+	console.log("Clause query is: " + final_query);
+}
+
+
+
+
+
+
+
+
+deleteUnnecessary();
+// clauseIdentification();
+singularpluralCorrection();
+databaseAndTableIndentification();
+attributeIdentication();
+integerIdentifcation();
+
+
+console.log(Initial_query + attributes_query + table_query + final_query);
