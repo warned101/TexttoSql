@@ -5,10 +5,9 @@ const mysql = require('mysql');
 const con = require('./dbConnect');
 const bodyparser = require('body-parser');
 const wordpos = new wordPos();
-<<<<<<< HEAD
+
 let str = "find the names roll_no of student having marks between 40 and 70";
-=======
->>>>>>> 1f8d96219a8cc38193c9605c43a3fd79640427c9
+
 const express = require('express')
 const app = express();
 
@@ -38,7 +37,7 @@ app.post('/test', async (req, res) => {
 
 	if (req.body.inputText) {
 		let str = req.body.inputText;
-		strData.inputText = req.body.inputText ;
+		strData.inputText = req.body.inputText;
 		await inputBreakdown(str);
 		clause(str);
 		console.log(strData);
@@ -51,6 +50,66 @@ app.post('/test', async (req, res) => {
 })
 
 
+// ============================================= DB CONNECTION AND ALL TABLE INFO RETERIVE ===========================================
+
+const objectifyRawPacket = row => ({ ...row });
+
+con.promise().query("SHOW DATABASES")
+	.then(([rows, fields]) => {
+		// console.log(rows)
+		rows = rows.map(objectifyRawPacket);
+		// rows = [{ Database: 'test' }];
+		getDatabaseInfo(rows).then(() => {
+			// console.log('hmm')
+		});
+	})
+	.catch((err) => console.log(err));
+
+function runQuery(dbname) {
+	return new Promise((resolve, reject) => {
+		con.promise().query(`select TABLE_NAME , COLUMN_NAME from information_schema.columns where table_schema = '${dbname}' order by table_name,ordinal_position`)
+			.then(([rows, fields]) => {
+				rows = rows.map(objectifyRawPacket);
+				resolve(rows);
+			})
+			.catch((err) => console.log(err));
+	})
+}
+
+
+// Helper function for formatting the data recived from MYSQL DB
+function modifyDataFormate(database_data) {
+	// console.log(database_data);
+	database_data.forEach(element => {
+		let temp = [];
+		let tname = "";
+		// console.log(element);
+		element.forEach(i => {
+			tname = i.TABLE_NAME;
+			temp.push(i.COLUMN_NAME);
+		})
+		if (tname) {
+			allTable.push(tname);
+			allTableCol.set(tname, temp);
+		}
+	});
+}
+async function getDatabaseInfo(database) {
+	let database_data = [];
+	for (const iterator of database) {
+		let x = await runQuery(iterator.Database);
+		// console.log(typeof (x));
+		x = JSON.stringify(x);
+		x = JSON.parse(x);
+		database_data.push(x);
+	}
+	modifyDataFormate(database_data);
+	console.log(allTable);
+	con.end();
+}
+
+// ============================================= DB CONNECTION END ===========================================
+
 // function prints noun verb .... from the input string
 function inputBreakdown(inputStr) {
 	return new Promise(async (resolve, reject) => {
@@ -62,21 +121,12 @@ function inputBreakdown(inputStr) {
 	})
 }
 
-<<<<<<< HEAD
 
-let words = str.toLowerCase().split(" ");
-
+let words;
 var final_query;
 var table_query = " from ";
 var attributes_query;
 var Initial_query;
-
-
-deleteUnnecessary();
-
-clauseIdentification();
-
-console.log("Stemmers: " + stemmer(words));
 
 
 break_words = ["in", "for", "at", "whose", "having", "where", "have", "who", "that", "with", "by", "under", "from", "all"];
@@ -88,25 +138,22 @@ Array.prototype.diff = function (arr2) {
 	for (var i = 0; i < this.length; i += 1) {
 		if (arr2.indexOf(this[i]) > -1) {
 			ret.push(this[i]);
-=======
+		}
+	}
+	return ret;
+}
+
 function clause(str) {
 	return new Promise((resolve, reject) => {
-		let words = str.toLowerCase().split(" ");
+		words = str.toLowerCase().split(" ");
 		strData.stemmer = stemmer(words);
 		console.log("Stemmers: " + strData.stemmer);
-
-		break_words = ["in", "for", "at", "whose", "having", "where", "have", "who", "that", "with", "by", "under", "from", "all"];
-		Array.prototype.diff = function (arr2) {
-			var ret = [];
-			this.sort();
-			arr2.sort();
-			for (var i = 0; i < this.length; i += 1) {
-				if (arr2.indexOf(this[i]) > -1) {
-					ret.push(this[i]);
-				}
-			}
-			return ret;
-		};
+		deleteUnnecessary();
+		clauseIdentification();
+		singularpluralCorrection();
+		databaseAndTableIndentification();
+		attributeIdentication();
+		integerIdentifcation();
 
 		strData.breakWords = words.diff(break_words);
 		console.log("break_words: " + strData.breakWords);
@@ -122,7 +169,7 @@ function clause(str) {
 					// console.log(strData.relativeClause)
 				}
 			}
->>>>>>> 1f8d96219a8cc38193c9605c43a3fd79640427c9
+
 		}
 
 
@@ -200,104 +247,27 @@ function clause(str) {
 
 		if (insert_type.length > 0 || update_type.length > 0 || select_type > 0)
 			query_type = "DDL";
-		else
+		else {
 			query_type = "DML";
-
+			Initial_query = "Select ";
+			console.log("Initial query is " + Initial_query);
+		}
 		// console.log("Type of query: " + query_type);
 		strData.queryType = query_type;
 		// console.log(strData)
+		strData.finalQuery = Initial_query + " " + attributes_query + " " + table_query + " " + final_query;
+		console.log(Initial_query + " " + attributes_query + " " + table_query + " " + final_query);
 		resolve("sucess!!")
 	})
 
-<<<<<<< HEAD
-if (insert_type.length > 0 || update_type.length > 0 || select_type > 0)
-	query_type = "DDL";
-else{
-	query_type = "DML";
-	Initial_query = "Select ";
-	console.log("Initial query is " + Initial_query);
-}
-=======
->>>>>>> 1f8d96219a8cc38193c9605c43a3fd79640427c9
-
 }
 
 
+function deleteUnnecessary() {
+	del_words = ["a", "an", "the", "select", "find", "which", "is", "of", "with", "to", "for", "are", "what"];
 
-// ============================================= DB CONNECTION AND ALL TABLE INFO RETERIVE ===========================================
-
-const objectifyRawPacket = row => ({ ...row });
-
-con.promise().query("SHOW DATABASES")
-	.then(([rows, fields]) => {
-		// console.log(rows)
-		rows = rows.map(objectifyRawPacket);
-		getDatabaseInfo(rows).then(() => {
-			// console.log('hmm')
-		});
-	})
-	.catch((err) => console.log(err));
-
-function runQuery(dbname) {
-	return new Promise((resolve, reject) => {
-		con.promise().query(`select TABLE_NAME , COLUMN_NAME from information_schema.columns where table_schema = '${dbname}' order by table_name,ordinal_position`)
-			.then(([rows, fields]) => {
-				rows = rows.map(objectifyRawPacket);
-				resolve(rows);
-			})
-			.catch((err) => console.log(err));
-	})
-}
-
-// Helper function for formatting the data recived from MYSQL DB
-function modifyDataFormate(database_data) {
-	database_data.forEach(element => {
-		let temp = [];
-		let tname;
-		element.forEach(i => {
-			tname = i.TABLE_NAME;
-			temp.push(i.COLUMN_NAME);
-		})
-		if (tname) {
-			allTable.push(tname);
-			allTableCol.set(tname, temp);
-			// console.log(allTableCol);
-		}
-	});
-}
-async function getDatabaseInfo(database) {
-	let database_data = [];
-	for (const iterator of database) {
-		let x = await runQuery(iterator.Database);
-		// console.log(typeof (x));
-		x = JSON.stringify(x);
-		x = JSON.parse(x);
-		database_data.push(x);
-	}
-	modifyDataFormate(database_data);
-	con.end();
-}
-
-// ============================================= DB CONNECTION END ===========================================
-
-
-
-app.listen(4000, () => {
-	console.log('server running at 4000...')
-})
-
-
-
-
-
-
-
-
-function deleteUnnecessary(){
-	del_words = ["a","an","the","select","find","which","is","of","with","to","for","are","what"];
-	
-	words = words.filter( function( el ) {
-		return !del_words.includes( el );
+	words = words.filter(function (el) {
+		return !del_words.includes(el);
 	});
 
 	console.log("Words remaining: " + words);
@@ -319,42 +289,41 @@ function singularpluralCorrection() {
 
 
 
-function databaseAndTableIndentification(){
+function databaseAndTableIndentification() {
 	let db = "Janvi & Jaadu";
-	let table_name = "students";
-
+	// let table_name = "student";
+	// console.log(allTable);
 	console.log("This is hello world");
 
-	if(words.includes(db))
+	if (words.includes(db))
 		console.log("databse is " + db);
+	allTable.forEach((table_name) => {
+		if (words.includes(table_name)) {
+			strData.relations = table_name;
+			console.log("Table is " + db);
+			table_query = table_query.concat(table_name);
+			console.log("Table query is " + table_query);
+		}
+	})
 
-	if(words.includes(table_name)) {
-		console.log("Table is " + db);
-		table_query = table_query.concat(table_name);
-		console.log("Table query is " + table_query);
-	}
 }
 
-
-
-
-
-function attributeIdentication(){
-	attributes = ["names", "roll_no","age","marks"];
+function attributeIdentication() {
+	attributes = allTableCol.get(strData.relations);
+	// attributes = ["names", "roll_no", "age", "marks"];
 	attributesMatched = words.diff(attributes);
 	console.log("Attributes: " + attributesMatched);
+	strData.attribute = attributesMatched;
 	attributes_query = attributesMatched;
 	console.log("Attributes query is " + attributes_query);
 }
 
 
-function integerIdentifcation() { 
+function integerIdentifcation() {
 	for (var i = 0; i < words.length; i++) {
-		console.log("Integers found are: " + words[i].match(/(\d+)/));  
+		console.log("Integers found are: " + words[i].match(/(\d+)/));
 	}
-} 
-
-
+}
 
 function clauseIdentification() {
 	var num = words.indexOf("having");
@@ -364,23 +333,11 @@ function clauseIdentification() {
 		// console.log("wo" + words[i]);
 		final_query = final_query.concat(" ", words[i]);
 	}
-
 	console.log("Clause query is: " + final_query);
 }
 
 
+app.listen(4000, () => {
+	console.log('server running at 4000...')
+})
 
-
-
-
-
-
-deleteUnnecessary();
-// clauseIdentification();
-singularpluralCorrection();
-databaseAndTableIndentification();
-attributeIdentication();
-integerIdentifcation();
-
-
-console.log(Initial_query + attributes_query + table_query + final_query);
