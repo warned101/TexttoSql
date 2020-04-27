@@ -17,6 +17,7 @@
     "mysql-promise": "^5.0.0",
     "mysql2": "^2.1.0",
     "nodemon": "^2.0.3",
+    "pluralize": "^8.0.0",
     "promise": "^8.1.0",
     "stemmer": "",
     "wordpos": ""
