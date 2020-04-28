@@ -127,6 +127,7 @@ var final_query;
 var table_query = " from ";
 var attributes_query;
 var Initial_query;
+var order_query;
 
 
 break_words = ["in", "for", "at", "whose", "having", "where", "have", "who", "that", "with", "by", "under", "from", "all"];
@@ -164,7 +165,7 @@ function clause(str) {
 		for (var i = 0; i < words.length; i++) {
 			for (var key in rel_op_dict) {
 				if (words[i] == key) {
-					// console.log("relative clause:" + rel_op_dict[key]);
+					words[i] = rel_op_dict[key];
 					strData.relativeClause.push(rel_op_dict[key]);
 					// console.log(strData.relativeClause)
 				}
@@ -178,7 +179,8 @@ function clause(str) {
 		for (var i = 0; i < words.length; i++) {
 			for (var key in order_by_dict) {
 				if (words[i] == key) {
-					// console.log("ordered clause:" + order_by_dict[key]);
+					words[i] = order_by_dict[key];
+					order_query = " ORDER BY " + words[words.length - 1] + order_by_dict[key];
 					strData.orderedClause.push(order_by_dict[key]);
 				}
 			}
@@ -264,7 +266,7 @@ function clause(str) {
 
 
 function deleteUnnecessary() {
-	del_words = ["a", "an", "the", "select", "find", "which", "is", "of", "with", "to", "for", "are", "what"];
+	del_words = ["a", "an", "the", "select", "find", "which", "is", "of", "with", "to", "for", "are", "what","order"];
 
 	words = words.filter(function (el) {
 		return !del_words.includes(el);
@@ -290,7 +292,7 @@ function singularpluralCorrection() {
 
 
 function databaseAndTableIndentification() {
-	let db = "Janvi & Jaadu";
+	let db = "Jaadu";
 	// let table_name = "student";
 	// console.log(allTable);
 	console.log("This is hello world");
@@ -312,6 +314,23 @@ function attributeIdentication() {
 	attributes = allTableCol.get(strData.relations);
 	// attributes = ["names", "roll_no", "age", "marks"];
 	attributesMatched = words.diff(attributes);
+
+	var unNecessaryAttributes = final_query.split(" ");
+
+	unNecessaryAttributes = attributesMatched.diff(unNecessaryAttributes);
+
+	for (var i = 0; i < attributesMatched.length; i++) {
+		const index = attributesMatched.indexOf(unNecessaryAttributes);
+		if (index > -1) {
+  			attributesMatched.splice(index, 1);
+		}
+	}
+
+	if (attributes.length == attributesMatched.length) {
+		attributes_query = "*";
+	}
+
+
 	console.log("Attributes: " + attributesMatched);
 	strData.attribute = attributesMatched;
 	attributes_query = attributesMatched;
@@ -323,16 +342,27 @@ function integerIdentifcation() {
 	for (var i = 0; i < words.length; i++) {
 		console.log("Integers found are: " + words[i].match(/(\d+)/));
 	}
+
+	
 }
 
 function clauseIdentification() {
 	var num = words.indexOf("having");
-	words[num] = "where";
-	final_query = "where";
-	for (var i = num + 1; i < words.length; i++) {
-		// console.log("wo" + words[i]);
-		final_query = final_query.concat(" ", words[i]);
+	var num2 = words.indexOf("where");
+	var num3 = words.indexOf("whose");
+
+	if(num >= 0 || num2 >= 0 || num3 >= 0) {
+		words[num] = "where";
+		final_query = "where";
+
+		
+
+		for (var i = num + 1; i < words.length; i++) {
+			// console.log("wo" + words[i]);
+			final_query = final_query.concat(" ", words[i]);
+		}
 	}
+
 	console.log("Clause query is: " + final_query);
 }
 
