@@ -6,7 +6,7 @@ const con = require('./dbConnect');
 const bodyparser = require('body-parser');
 const wordpos = new wordPos();
 
-let str = "find the names roll_no of student having marks between 40 and 70";
+let str = "find the names age roll_no of students having marks greater than 70";
 
 const express = require('express')
 const app = express();
@@ -173,6 +173,8 @@ function clause(str) {
 
 		}
 
+		// console.log("Greater:" + words);
+
 
 		var order_by_dict = { "ordered": "ASC", "sorted": "ASC", "alphabetical": "ASC", "alphabetically": "ASC", "increasing": "ASC", "decreasing": "DESC", "ascending": "ASC", "descending": "DESC", "reverse": "DESC", "alphabetic": "ASC" };
 
@@ -266,7 +268,7 @@ function clause(str) {
 
 
 function deleteUnnecessary() {
-	del_words = ["a", "an", "the", "select", "find", "which", "is", "of", "with", "to", "for", "are", "what","order"];
+	del_words = ["a", "an", "the", "select", "find", "which", "is", "of", "with", "to", "for", "are", "what","order", "than"];
 
 	words = words.filter(function (el) {
 		return !del_words.includes(el);
@@ -304,7 +306,7 @@ function databaseAndTableIndentification() {
 			strData.relations = table_name;
 			console.log("Table is " + db);
 			table_query = table_query.concat(table_name);
-			console.log("Table query is " + table_query);
+			// console.log("Table query is " + table_query);
 		}
 	})
 
@@ -312,29 +314,38 @@ function databaseAndTableIndentification() {
 
 function attributeIdentication() {
 	attributes = allTableCol.get(strData.relations);
+
+	// console.log(attributes);
 	// attributes = ["names", "roll_no", "age", "marks"];
 	attributesMatched = words.diff(attributes);
+	// console.log("Attribute words"+ words);
 
-	var unNecessaryAttributes = final_query.split(" ");
+	console.log("No of:" + attributesMatched.length);
+	console.log("No of:" + attributes.length);
+	
+	// var unNecessaryAttributes = final_query.split(" ");
 
-	unNecessaryAttributes = attributesMatched.diff(unNecessaryAttributes);
+	// unNecessaryAttributes = attributesMatched.diff(unNecessaryAttributes);
 
-	for (var i = 0; i < attributesMatched.length; i++) {
-		const index = attributesMatched.indexOf(unNecessaryAttributes);
-		if (index > -1) {
-  			attributesMatched.splice(index, 1);
-		}
-	}
+	// for (var i = 0; i < attributesMatched.length; i++) {
+	// 	const index = attributesMatched.indexOf(unNecessaryAttributes);
+	// 	if (index > -1) {
+  	// 		attributesMatched.splice(index, 1);
+	// 	}
+	// }
 
 	if (attributes.length == attributesMatched.length) {
-		attributes_query = "*";
+		attributesMatched = "*";
 	}
 
+	
+	// console.log(allTableCol);
 
-	console.log("Attributes: " + attributesMatched);
+	// console.log( attributesMatched);
 	strData.attribute = attributesMatched;
 	attributes_query = attributesMatched;
 	console.log("Attributes query is " + attributes_query);
+
 }
 
 
@@ -354,14 +365,32 @@ function clauseIdentification() {
 	if(num >= 0 || num2 >= 0 || num3 >= 0) {
 		words[num] = "where";
 		final_query = "where";
-
 		
+
+
+		var rel_op_dict = { "greater": ">", "more": ">", "less": "<", "greater equal": ">=", "less equal": "<=", "equal": "=", "": "=", "except": "!=", "not": "!=" };
+
+		for (var i = 0; i < words.length; i++) {
+			for (var key in rel_op_dict) {
+				if (words[i] == key) {
+					words[i] = rel_op_dict[key];
+					// strData.relativeClause.push(rel_op_dict[key]);
+					// console.log(strData.relativeClause)
+				}
+			}
+
+		}	
+
+
+
+
 
 		for (var i = num + 1; i < words.length; i++) {
 			// console.log("wo" + words[i]);
 			final_query = final_query.concat(" ", words[i]);
 		}
 	}
+
 
 	console.log("Clause query is: " + final_query);
 }
