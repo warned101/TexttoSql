@@ -123,7 +123,7 @@ function inputBreakdown(inputStr) {
 
 
 let words;
-var final_query;
+var final_query="";
 var table_query = " from ";
 var attributes_query;
 var Initial_query;
